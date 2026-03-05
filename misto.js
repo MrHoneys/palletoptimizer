@@ -37,7 +37,6 @@ const legenda = document.getElementById('legenda');
 const info = document.getElementById('info');
 const total = document.getElementById('total');
 
-// Preencher categorias
 Object.keys(veiculosDB).forEach(k => 
   cat.add(new Option(k.charAt(0).toUpperCase() + k.slice(1).replace('container','Container'), k))
 );
@@ -63,7 +62,41 @@ function limpar() {
   restante = veiculo?.c || 0;
 }
 
+/* ----------- NOVA FUNÇÃO DE CÁLCULO ----------- */
+
+function calcularMelhorLayout(cp, lp, comprimentoDisponivel, larguraVeiculo){
+
+  const op1_porLinha = Math.floor(larguraVeiculo / lp);
+  const op1_linhas = Math.floor(comprimentoDisponivel / cp);
+  const op1_total = op1_porLinha * op1_linhas;
+
+  const op2_porLinha = Math.floor(larguraVeiculo / cp);
+  const op2_linhas = Math.floor(comprimentoDisponivel / lp);
+  const op2_total = op2_porLinha * op2_linhas;
+
+  if(op2_total > op1_total){
+    return {
+      lado: cp,
+      avanco: lp,
+      porColuna: op2_porLinha,
+      colunasCabem: op2_linhas,
+      max: op2_total
+    }
+  }
+
+  return {
+    lado: lp,
+    avanco: cp,
+    porColuna: op1_porLinha,
+    colunasCabem: op1_linhas,
+    max: op1_total
+  }
+}
+
+/* ----------- BOTÃO ADD ----------- */
+
 document.getElementById('add').onclick = () => {
+
   const cp = +document.getElementById('comp').value;
   const lp = +document.getElementById('larg').value;
   const hp = +document.getElementById('alt').value;
@@ -72,29 +105,23 @@ document.getElementById('add').onclick = () => {
   if (!cp || !lp || !hp || !desejado) return alert("⚠️ Preencha todos os campos!");
   if (hp > veiculo.h) return alert("❌ Pallet muito alto para este veículo!");
 
-  // Determinar lado de apoio correto
-  let lado, avanco;
-  if (lp <= cp) { 
-    lado = lp; avanco = cp; 
-  } else { 
-    lado = cp; avanco = lp; 
-  }
+  const layout = calcularMelhorLayout(cp, lp, restante, veiculo.l);
 
-  const porColuna = Math.floor(veiculo.l / lado);
-  const colunasCabem = Math.floor(restante / avanco);
-  const max = porColuna * colunasCabem;
+  const lado = layout.lado;
+  const avanco = layout.avanco;
+  const porColuna = layout.porColuna;
+  const max = layout.max;
+
   if (max === 0) return alert("❌ Não há mais espaço no comprimento!");
 
   const colocados = Math.min(desejado, max);
   const colunasUsadas = Math.ceil(colocados / porColuna);
 
-  // Calcular avanço proporcional para o restante
-  const colunasCompletas = Math.floor(colocados / porColuna);
-  const ultimaColuna = colocados % porColuna;
-  const avancosReais = colunasCompletas * avanco + (ultimaColuna > 0 ? avanco * (ultimaColuna / porColuna) : 0);
+  /* ---------- CORREÇÃO DO AVANÇO ---------- */
+
+  const avancosReais = colunasUsadas * avanco;
   restante = Math.round((restante - avancosReais) * 100) / 100;
 
-  // Salvar na carga
   carga.push({
     tipo: ++tipoPallet,
     cor: cores[(tipoPallet-1) % cores.length],
@@ -103,6 +130,7 @@ document.getElementById('add').onclick = () => {
     porColuna, colunasUsadas,
     lado, avanco
   });
+
   numeroPallet += colocados;
 
   ['comp','larg','alt','qtd'].forEach(id => document.getElementById(id).value = '');
@@ -122,24 +150,22 @@ function desenhar() {
     totalColocados += p.colocados;
     totalDesejado += p.desejado;
 
-    // Avanço proporcional real
-    const colunasCompletas = Math.floor(p.colocados / p.porColuna);
-    const ultimaColuna = p.colocados % p.porColuna;
-    const avancosReais = colunasCompletas * p.avanco + (ultimaColuna > 0 ? p.avanco * (ultimaColuna / p.porColuna) : 0);
+    /* ---------- CORREÇÃO DO AVANÇO ---------- */
+
+    const avancosReais = p.colunasUsadas * p.avanco;
     totalUsado += avancosReais;
 
-    // Legenda
     const item = document.createElement('div');
     item.className = 'flex items-center gap-4 bg-slate/50 px-6 py-4 rounded-xl border border-gray-700';
     item.innerHTML = `<div class="w-10 h-10 rounded-lg shadow-lg" style="background:${p.cor}"></div>
                       <span class="font-bold text-lg">#${String(p.tipo).padStart(2,'0')} → ${p.cp} × ${p.lp} × ${p.hp} m</span>`;
     legenda.appendChild(item);
 
-    // Pallets visuais
     for (let c = 0; c < p.colunasUsadas; c++) {
       const coluna = document.createElement('div');
       coluna.className = 'flex flex-col items-center gap-3';
       const qtdNesta = Math.min(p.colocados - c * p.porColuna, p.porColuna);
+
       for (let i = 0; i < qtdNesta; i++) {
         const pallet = document.createElement('div');
         pallet.className = 'w-24 h-24 rounded-2xl flex items-center justify-center text-2xl font-black shadow-2xl transform hover:scale-110 transition';
@@ -147,10 +173,10 @@ function desenhar() {
         pallet.textContent = p.inicio + c * p.porColuna + i;
         coluna.appendChild(pallet);
       }
+
       bau.appendChild(coluna);
     }
 
-    // Resumo formal
     info.innerHTML += `
       <div class="mb-6 p-5 bg-slate/50 rounded-xl border border-gray-700">
         <strong>#${String(p.tipo).padStart(2,'0')} → ${p.cp} × ${p.lp} × ${p.hp} m</strong><br>
@@ -183,10 +209,8 @@ document.getElementById('finalizar').onclick = () => {
   alert(`🚛 CARGA FINALIZADA!\n\n${veiculo.nome}\n${carga.reduce((a,c)=>a+c.colocados,0)} pallets carregados de ${carga.reduce((a,c)=>a+c.desejado,0)}\n${(veiculo.c - restante).toFixed(2)}m utilizados → ${perc}% de aproveitamento`);
 };
 
-// Botão Carga Mista
 document.getElementById('mixed-load')?.addEventListener('click', () => {
   window.location.href = 'misto.html';
 });
 
-// Botão limpar
 document.getElementById('clear-form').onclick = limpar;
