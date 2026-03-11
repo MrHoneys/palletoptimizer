@@ -1,21 +1,24 @@
 const veiculosDB = {
     carreta: [
-        { nome: "Carreta 15.4m", c: 15.40, l: 2.50, h: 2.70 },
-        { nome: "Carreta 14.6m", c: 14.60, l: 2.50, h: 2.70 }
+        { nome: "Carreta 15.4m", c: 15.40, l: 2.50, h: 2.70, vagoes: 1 },
+        { nome: "Carreta 14.6m", c: 14.60, l: 2.50, h: 2.70, vagoes: 1  }
+    ],
+    rodotrem: [
+        { nome: "Rodo-Trem 12.50m", c: 12.50, l: 2.50, h: 2.70, vagoes: 2 }
     ],
     truck: [
-        { nome: "Truck 10.4m", c: 10.40, l: 2.40, h: 2.70 },
-        { nome: "Truck 9.7m", c: 9.70, l: 2.40, h: 2.70 },
-        { nome: "Truck 8.5m", c: 8.50, l: 2.40, h: 2.70 }
+        { nome: "Truck 10.4m", c: 10.40, l: 2.40, h: 2.70, vagoes: 1 },
+        { nome: "Truck 9.7m", c: 9.70, l: 2.40, h: 2.70, vagoes: 1 },
+        { nome: "Truck 8.5m", c: 8.50, l: 2.40, h: 2.70, vagoes: 1 }
     ],
     van: [
-        { nome: "VAN 3.1m", c: 3.10, l: 1.80, h: 1.90 },
-	{ nome: "IVECO BAU 3.9m", c: 3.90, l: 2.10, h: 2.10 },
+    { nome: "VAN 3.1m", c: 3.10, l: 1.80, h: 1.90, vagoes: 1 },
+	{ nome: "IVECO BAU 3.9m", c: 3.90, l: 2.10, h: 2.10, vagoes: 1 },
     ],
     container: [
-        { nome: "45' HC", c: 13.50, l: 2.33, h: 2.58 },
-        { nome: "40' HC", c: 12.00, l: 2.33, h: 2.58 },
-        { nome: "20' DC", c: 5.88, l: 2.33, h: 2.26 }
+        { nome: "45' HC", c: 13.50, l: 2.33, h: 2.58, vagoes: 1 },
+        { nome: "40' HC", c: 12.00, l: 2.33, h: 2.58, vagoes: 1 },
+        { nome: "20' DC", c: 5.88, l: 2.33, h: 2.26, vagoes: 1 }
     ]
 };
 
@@ -145,13 +148,16 @@ document.getElementById("pallet-form").onsubmit = function(e) {
             const totalB = B_fileirasComprimento * B_fileirasLargura;
 
             const melhor = totalB > totalA ? "B" : "A";
-            const totalPallets = Math.max(totalA, totalB);
+            const palletsPorVagao = Math.max(totalA, totalB);
+            const totalPallets = palletsPorVagao * veiculo.vagoes;      
             const camadas = Math.floor(veiculo.h / alt);
 
             if (totalPallets > 0) {
                 resultados.push({
                     veiculo: veiculo.nome,
                     total: totalPallets,
+                    porVagao: palletsPorVagao,
+                    vagoes: veiculo.vagoes,
                     fileirasComprimento: melhor === "B" ? B_fileirasComprimento : A_fileirasComprimento,
                     fileirasLargura: melhor === "B" ? B_fileirasLargura : A_fileirasLargura,
                     orientacao: melhor === "B" ? "DE LARGURA" : "DE COMPRIDO",
@@ -174,6 +180,12 @@ document.getElementById("pallet-form").onsubmit = function(e) {
                 <h3 class="text-2xl font-bold mb-3">${r.veiculo}</h3>
                 <p class="text-5xl font-extrabold text-green-400">${r.total}</p>
                 <p class="text-gray-400 text-lg">Pallets totais</p>
+                ${r.vagoes > 1 ? `
+                <div class="mt-4 text-lg">
+                <p>1º vagão: <span class="text-green-300 font-bold">${r.porVagao}</span></p>
+                <p>2º vagão: <span class="text-green-300 font-bold">${r.porVagao}</span></p>
+                </div>
+                ` : ``}
 
                 <div class="bg-blue-900/50 backdrop-blur border border-blue-700 p-4 rounded-xl text-center my-6 text-sm leading-relaxed">
                     <span class="text-yellow-300 font-bold block text-lg">Posicione o pallet ${r.orientacao}</span>
