@@ -22,6 +22,10 @@ Com ela você descobre exatamente quantas peças, caixas ou paletes cabem dentro
 
 <img width="1919" height="859" alt="001" src="https://github.com/user-attachments/assets/05e50996-2306-4d4b-8929-6186df956312" />
 <img width="1919" height="872" alt="002" src="https://github.com/user-attachments/assets/6ee96577-ba44-46ba-9c10-866bd723bad7" />
+<img width="931" height="676" alt="001" src="https://github.com/user-attachments/assets/3585e6f9-d3ca-4299-b7a3-74b8eefd8406" />
+<img width="935" height="759" alt="002" src="https://github.com/user-attachments/assets/3798b85b-0fc9-4751-bfdd-ad5ccddc3be3" />
+<img width="922" height="631" alt="003" src="https://github.com/user-attachments/assets/982bd438-b9c4-40f9-ac96-3bb1aaceb768" />
+
 
 > *Exemplo da visualização 3D interativa dentro do caminhão (substitua pela sua screenshot real)*
 
