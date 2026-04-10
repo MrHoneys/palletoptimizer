@@ -4,172 +4,461 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pallets Pro - Inteligente</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>palletoptimizer - Sistema Inteligente de Carga</title>
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #0d1117;
-            color: #e6e6e6;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d1117;
+            min-height: 100vh;
+        }
+
+        /* Container principal */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: #0f172a;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid #1e293b;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            color: #3b82f6;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #94a3b8;
+        }
+
+        /* Cards */
         .card {
-            background: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 1.5rem;
-            padding: 2rem;
-            transition: all 0.3s ease;
+            background: #1e293b;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid #334155;
         }
 
         .card:hover {
-            transform: translateY(-8px);
-            border-color: #3b82f6;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
         }
 
-        .input {
+        /* Formulário */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #e2e8f0;
+            font-size: 16px;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 12px;
             background: #0f172a;
-            border: 1px solid #1e293b;
-            padding: 14px;
-            border-radius: 12px;
+            border: 2px solid #334155;
+            border-radius: 10px;
+            font-size: 16px;
+            color: #e2e8f0;
+            transition: border-color 0.3s;
+        }
+
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .dimension-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .dimension-item {
+            text-align: center;
+        }
+
+        .dimension-item span {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        /* Botões */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
             color: white;
         }
 
-        .input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px #3b82f660;
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
         }
 
-        .best {
-            border-left: 6px solid #10b981;
+        .btn-secondary {
+            background: #475569;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #334155;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #1e293b;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading p {
+            margin-top: 20px;
+            color: #94a3b8;
+        }
+
+        /* Resultados */
+        .results {
+            display: none;
+        }
+
+        .results-title {
+            text-align: center;
+            font-size: 32px;
+            color: #10b981;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+        }
+
+        .result-card {
+            background: #1e293b;
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+            border: 2px solid #334155;
+        }
+
+        .result-card.best {
+            border-color: #10b981;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+            transform: scale(1.02);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #334155;
+        }
+
+        .result-header h3 {
+            font-size: 20px;
+            color: #e2e8f0;
+        }
+
+        .total-pallets {
+            text-align: right;
+        }
+
+        .total-pallets .number {
+            font-size: 42px;
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        .total-pallets .label {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .result-info {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #0f172a;
+            border-radius: 10px;
+        }
+
+        .info-badge {
+            flex: 1;
+            text-align: center;
+        }
+
+        .info-badge span:first-child {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .info-badge span:last-child {
+            display: block;
+            font-size: 18px;
+            font-weight: bold;
+            color: #e2e8f0;
+        }
+
+        .canvas-container {
+            overflow-x: auto;
+            margin-top: 15px;
         }
 
         canvas {
-            image-rendering: crisp-edges;
+            display: block;
+            margin: 0 auto;
+            border-radius: 10px;
+            background: #0f172a;
         }
 
-        .footer-gradient {
-            background: linear-gradient(to top, #000000, #0d1117 60%);
+        /* Footer */
+        .footer {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 30px;
+            margin-top: 40px;
+            border-radius: 20px;
+            border: 1px solid #1e293b;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 15px;
+            color: #3b82f6;
+        }
+
+        .footer-section p {
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .footer-section a {
+            color: #3b82f6;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .footer-section a:hover {
+            color: #2563eb;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #1e293b;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
         }
     </style>
 </head>
 
-<body class="min-h-screen">
+<body>
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📦 PALLETS PRO</h1>
+            <p>Sistema inteligente de otimização de carga | Calcule a melhor disposição de pallets</p>
+        </div>
 
-    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Formulário -->
+        <div class="card">
+            <form id="pallet-form">
+                <div class="form-grid">
+                    <div>
+                        <div class="form-group">
+                            <label>Tipo de Veículo</label>
+                            <select id="vehicle-type">
+                                <option value="carreta">🚛 Carreta (15.4m / 14.6m)</option>
+                                <option value="rodotrem">🚚 Rodo-Trem (12.50m)</option>
+                                <option value="truck">🚛 Truck (10.4m / 9.7m / 8.5m)</option>
+                                <option value="van">🚐 Van / VUC (3.1m / 3.9m)</option>
+                                <option value="container">📦 Container (45' / 40' / 20')</option>
+                            </select>
+                        </div>
 
-        <header class="text-center mb-12">
-            <h1 class="text-5xl font-extrabold text-blue-400">Pallets Pro</h1>
-            <p class="text-gray-400 text-lg mt-2">Cálculo inteligente e otimizado de carga</p>
-        </header>
-
-        <!-- FORMULÁRIO -->
-        <div class="card mb-12">
-            <form id="pallet-form" class="grid md:grid-cols-2 gap-10">
-
-                <div>
-                    <label class="text-xl font-bold mb-3 block">Tipo de Veículo</label>
-                    <select id="vehicle-type" class="input w-full text-lg">
-                        <option value="carreta">Carreta</option>
-                        <option value="rodotrem">Rodo-Trem</option>
-                        <option value="truck">Truck</option>
-                        <option value="van">Van / VUC</option>
-                        <option value="container">Container</option>
-                    </select>
-
-                    <label class="text-xl font-bold mt-8 mb-3 block">Dimensões do Pallet (m)</label>
-
-                    <div class="flex justify-between text-gray-400 font-semibold text-lg mb-3">
-                        <span>Comprimento</span>
-                        <span>Largura</span>
-                        <span>Altura</span>
+                        <div class="form-group">
+                            <label>Dimensões do Pallet (metros)</label>
+                            <div class="dimension-group">
+                                <div class="dimension-item">
+                                    <span>📏 Comprimento</span>
+                                    <input type="number" id="length" step="0.01" value="1.20">
+                                </div>
+                                <div class="dimension-item">
+                                    <span>📐 Largura</span>
+                                    <input type="number" id="width" step="0.01" value="1.10">
+                                </div>
+                                <div class="dimension-item">
+                                    <span>📏 Altura</span>
+                                    <input type="number" id="height" step="0.01" value="1.90">
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-4">
-                        <input id="length" type="number" step="0.01" value="1.20" class="input" placeholder="1.20">
-                        <input id="width" type="number" step="0.01" value="1.00" class="input" placeholder="1.00">
-                        <input id="height" type="number" step="0.01" value="1.80" class="input" placeholder="1.80">
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">🎯 Calcular Melhor Opção</button>
+                        <button type="button" id="clear-form" class="btn btn-secondary">🗑️ Limpar Resultados</button>
+                        <a href="misto.html" class="btn btn-success"
+                            style="text-decoration: none; display: block; text-align: center;">
+                            🔄 Carga Mista
+                        </a>
                     </div>
-                </div>
-
-                <div class="flex flex-col justify-center gap-6">
-                    <button type="submit"
-                        class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-5 rounded-xl text-xl shadow-lg transition">
-                        Calcular Melhor Opção
-                    </button>
-                    <button type="button" id="clear-form"
-                        class="bg-gray-700 hover:bg-gray-600 py-4 text-lg rounded-xl transition">
-                        Limpar Resultados
-                    </button>
-                    <button type="button" onclick="window.location.href='misto.html'"
-                        class="bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl text-lg shadow-lg transition">
-                        Carga Mista
-                    </button>
                 </div>
             </form>
         </div>
 
-        <!-- LOADING -->
-        <div id="loading" class="hidden text-center py-16">
-            <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto">
-            </div>
-            <p class="text-blue-400 mt-6 text-xl">Calculando a melhor disposição...</p>
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Calculando melhor disposição...</p>
         </div>
 
-        <!-- RESULTADOS -->
-        <div id="results" class="hidden">
-            <h2 class="text-4xl font-bold text-center mb-12 text-green-400">Melhores Resultados</h2>
-            <div id="results-container" class="grid md:grid-cols-2 xl:grid-cols-3 gap-8"></div>
+        <!-- Resultados -->
+        <div id="results" class="results">
+            <h2 class="results-title">📊 Melhores Resultados</h2>
+            <div id="results-container" class="results-grid"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>palletoptimizer</h3>
+                    <p>Sistema inteligente para cálculo otimizado de carga e disposição de pallets em diferentes tipos
+                        de veículos.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Links Úteis</h3>
+                    <p>🏠 Início</p>
+                    <p>⚙️ Sistema</p>
+                    <p>🔄 Carga Mista</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Contato</h3>
+                    <p>📧 juliobaldoo10@gmail.com</p>
+                    <a href="#">🔗 LinkedIn</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025-2026 palletoptimizer • Todos os direitos reservados • Sistema de Otimização de Carga</p>
+            </div>
         </div>
     </div>
 
-    <footer class="footer-gradient mt-16 py-12 border-t border-gray-800">
-        <div class="max-w-6xl mx-auto px-6">
-
-            <div class="grid md:grid-cols-3 gap-10 text-center md:text-left">
-
-                <div>
-                    <h3 class="text-xl font-bold text-blue-400 mb-3">Pallets Pro</h3>
-                    <p class="text-gray-400 text-sm">
-                        Sistema inteligente para cálculo otimizado de carga e disposição de pallets.
-                    </p>
-                </div>
-
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-300 mb-3">Links Úteis</h3>
-                    <ul class="space-y-2 text-gray-400">
-                        <li><a href="index.html" class="hover:text-blue-400 transition">Início</a></li>
-                        <li><a href="sistema.html" class="hover:text-blue-400 transition">Sistema</a></li>
-                        <li><a href="misto.html" class="hover:text-blue-400 transition">Misto</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-300 mb-3">Contato</h3>
-                    <p class="text-gray-400 text-sm">Me encontre no LinkedIn</p>
-
-                    <a href="https://www.linkedin.com/in/julio-cezar-de-paula-baldo-51774321a/" target="_blank"
-                        class="text-blue-400 hover:text-blue-300 font-semibold mt-2 block transition">
-                        🔗 LinkedIn
-                    </a>
-                </div>
-            </div>
-
-            <div class="text-center text-gray-600 text-sm mt-10 pt-6 border-t border-gray-800">
-                © 2025 Pallets Pro • Todos os direitos reservados
-            </div>
-
-        </div>
-    </footer>
-
-
-
     <script src="script.js"></script>
-
 </body>
 
 </html>
