@@ -33,42 +33,42 @@ function desenharVisual(canvas, colunas, linhas, vagoes = 1) {
     const ctx = canvas.getContext("2d");
     const tamanhoCelula = 80;
     const espacamentoVagao = 20;
-    
+
     const larguraVagao = colunas * tamanhoCelula;
     const alturaVagao = linhas * tamanhoCelula;
-    
+
     const larguraTotal = larguraVagao + 40;
     const alturaTotal = (alturaVagao * vagoes) + (espacamentoVagao * (vagoes - 1)) + 40;
-    
+
     canvas.width = larguraTotal;
     canvas.height = alturaTotal;
     canvas.style.width = '100%';
     canvas.style.height = 'auto';
-    
+
     // FUNDO PRETO
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     for (let v = 0; v < vagoes; v++) {
         const offsetY = 20 + v * (alturaVagao + espacamentoVagao);
-        
+
         let numero = 1;
         for (let y = 0; y < linhas; y++) {
             for (let x = 0; x < colunas; x++) {
                 const px = 20 + x * tamanhoCelula;
                 const py = offsetY + y * tamanhoCelula;
-                
+
                 // QUADRADOS VERDES
                 const grad = ctx.createLinearGradient(px, py, px + tamanhoCelula, py + tamanhoCelula);
                 grad.addColorStop(0, "#10b981");
                 grad.addColorStop(1, "#059669");
                 ctx.fillStyle = grad;
                 ctx.fillRect(px, py, tamanhoCelula - 2, tamanhoCelula - 2);
-                
+
                 ctx.strokeStyle = "#34d399";
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(px, py, tamanhoCelula - 2, tamanhoCelula - 2);
-                
+
                 // Números brancos dentro dos quadrados
                 ctx.font = `bold 28px 'Segoe UI', Arial`;
                 ctx.textAlign = "center";
@@ -84,41 +84,46 @@ function desenharVisual(canvas, colunas, linhas, vagoes = 1) {
 }
 
 // Evento de submit do formulário
-document.getElementById("pallet-form").onsubmit = function(e) {
+document.getElementById("pallet-form").onsubmit = function (e) {
     e.preventDefault();
-    
+
     const tipo = document.getElementById("vehicle-type").value;
     const comp = parseFloat(document.getElementById("length").value);
     const larg = parseFloat(document.getElementById("width").value);
     const alt = parseFloat(document.getElementById("height").value);
-    
+
     if (isNaN(comp) || isNaN(larg) || isNaN(alt) || comp <= 0 || larg <= 0 || alt <= 0) {
         alert("Por favor, insira valores válidos para as dimensões do pallet.");
         return;
     }
-    
+
     // Mostrar loading
     document.getElementById("loading").style.display = "block";
     document.getElementById("results").style.display = "none";
     document.getElementById("results-container").innerHTML = "";
-    
+
     setTimeout(() => {
         const resultados = [];
-        
+
         veiculosDB[tipo].forEach(veiculo => {
             const A_fileirasComprimento = Math.floor(veiculo.c / comp);
             const A_fileirasLargura = Math.floor(veiculo.l / larg);
             const totalA = A_fileirasComprimento * A_fileirasLargura;
-            
+
             const B_fileirasComprimento = Math.floor(veiculo.c / larg);
             const B_fileirasLargura = Math.floor(veiculo.l / comp);
             const totalB = B_fileirasComprimento * B_fileirasLargura;
-            
+
             const melhor = totalB > totalA ? "B" : "A";
             const palletsPorVagao = Math.max(totalA, totalB);
             const totalPallets = palletsPorVagao * veiculo.vagoes;
             const camadas = Math.floor(veiculo.h / alt);
-            
+
+            // NOVO: identificar orientação
+            const ladoCarregado = melhor === "A"
+                ? "Comprimento do pallet no comprimento do veículo"
+                : "Largura do pallet no comprimento do veículo";
+
             if (totalPallets > 0 && palletsPorVagao > 0) {
                 resultados.push({
                     veiculo: veiculo.nome,
@@ -127,25 +132,26 @@ document.getElementById("pallet-form").onsubmit = function(e) {
                     vagoes: veiculo.vagoes,
                     fileirasComprimento: melhor === "B" ? B_fileirasComprimento : A_fileirasComprimento,
                     fileirasLargura: melhor === "B" ? B_fileirasLargura : A_fileirasLargura,
-                    camadas: camadas > 0 ? camadas : 1
+                    camadas: camadas > 0 ? camadas : 1,
+                    ladoCarregado // <-- novo campo
                 });
             }
         });
-        
+
         resultados.sort((a, b) => b.total - a.total);
-        
+
         const container = document.getElementById("results-container");
-        
+
         resultados.forEach((r, i) => {
             const canvasId = "canvas_" + Date.now() + "_" + i;
             const isBest = i === 0;
-            
+
             const card = document.createElement("div");
             card.className = `result-card ${isBest ? 'best' : ''}`;
-            
+
             // Texto de vagões
             const vagoesTexto = r.vagoes === 2 ? `${r.porVagao} cada` : '';
-            
+
             card.innerHTML = `
                 <div class="result-header">
                     <h3>${r.veiculo}</h3>
@@ -167,6 +173,10 @@ document.getElementById("pallet-form").onsubmit = function(e) {
                         <span>📚 Camadas</span>
                         <span>${r.camadas}</span>
                     </div>
+                    <div class="info-badge-one">
+                        <span>🔄 Orientação</span>
+                        <span>${r.ladoCarregado}</span>
+                    </div>
                     <div class="info-badge">
                         <span>📐 Disposição</span>
                         <span>${r.fileirasComprimento}×${r.fileirasLargura}</span>
@@ -176,14 +186,15 @@ document.getElementById("pallet-form").onsubmit = function(e) {
                 <div class="canvas-container">
                     <canvas id="${canvasId}"></canvas>
                 </div>
+                
             `;
-            
+
             container.appendChild(card);
-            
+
             const canvas = document.getElementById(canvasId);
             desenharVisual(canvas, r.fileirasComprimento, r.fileirasLargura, r.vagoes);
         });
-        
+
         document.getElementById("loading").style.display = "none";
         document.getElementById("results").style.display = "block";
     }, 300);
