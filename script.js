@@ -8,11 +8,14 @@ const veiculosDB = {
         { nome: "Rodo-Trem 12.50m", c: 12.50, l: 2.50, h: 2.70, vagoes: 2 }
     ],
     truck: [
-        { nome: "Truck 10.4m", c: 10.40, l: 2.40, h: 2.70, vagoes: 1 },
-        { nome: "Truck 9.7m", c: 9.70, l: 2.40, h: 2.70, vagoes: 1 },
-        { nome: "Truck 8.5m", c: 8.50, l: 2.40, h: 2.70, vagoes: 1 }
+        { nome: "Truck 10.4m", c: 10.40, l: 2.40, h: 2.66, vagoes: 1 },
+        { nome: "Truck 9.7m", c: 9.70, l: 2.40, h: 2.66, vagoes: 1 },
+        { nome: "Truck 8.5m", c: 8.50, l: 2.40, h: 2.66, vagoes: 1 }
     ],
-    van: [
+    tres_quarto: [
+        { nome: "3/4 5.5m", c: 5.5, l: 2.40, h: 2.40, vagoes: 1 },
+    ],
+    outros: [
         { nome: "VAN 3.1m", c: 3.10, l: 1.80, h: 1.90, vagoes: 1 },
         { nome: "IVECO BAU 3.9m", c: 3.90, l: 2.10, h: 2.10, vagoes: 1 },
     ],
