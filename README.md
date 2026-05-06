@@ -91,8 +91,8 @@ Projeto 100% frontend, sem necessidade de backend ou instalação.
 
 🌐 Acessar online
 
-https://mrhoneys.github.io/Pallets-Pro--Inteligente/
-
+[https://mrhoneys.github.io/Pallets-Pro--Inteligente/
+](https://mrhoneys.github.io/palletoptimizer/)
 --------------------------------------------------
 
 💻 Rodar localmente
