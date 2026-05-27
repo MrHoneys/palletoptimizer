@@ -31,7 +31,24 @@ function formatNumber(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-// Função para desenhar visualização - APENAS QUADRADOS VERDES, FUNDO PRETO, SEM TEXTO "VAGÃO"
+// ✅ NOVA FUNÇÃO
+function verificarSeCabe(veiculo, comp, larg, alt) {
+    const motivos = [];
+
+    if (alt > veiculo.h) motivos.push("Altura");
+
+    const cabeA = comp <= veiculo.c && larg <= veiculo.l;
+    const cabeB = larg <= veiculo.c && comp <= veiculo.l;
+
+    if (!cabeA && !cabeB) {
+        if (comp > veiculo.c || larg > veiculo.c) motivos.push("Comprimento");
+        if (larg > veiculo.l || comp > veiculo.l) motivos.push("Largura");
+    }
+
+    return motivos;
+}
+
+// Função visual (igual)
 function desenharVisual(canvas, colunas, linhas, vagoes = 1) {
     const ctx = canvas.getContext("2d");
     const tamanhoCelula = 80;
@@ -48,7 +65,6 @@ function desenharVisual(canvas, colunas, linhas, vagoes = 1) {
     canvas.style.width = '100%';
     canvas.style.height = 'auto';
 
-    // FUNDO PRETO
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -61,10 +77,10 @@ function desenharVisual(canvas, colunas, linhas, vagoes = 1) {
                 const px = 20 + x * tamanhoCelula;
                 const py = offsetY + y * tamanhoCelula;
 
-                // QUADRADOS VERDES
                 const grad = ctx.createLinearGradient(px, py, px + tamanhoCelula, py + tamanhoCelula);
                 grad.addColorStop(0, "#10b981");
                 grad.addColorStop(1, "#059669");
+
                 ctx.fillStyle = grad;
                 ctx.fillRect(px, py, tamanhoCelula - 2, tamanhoCelula - 2);
 
@@ -72,21 +88,17 @@ function desenharVisual(canvas, colunas, linhas, vagoes = 1) {
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(px, py, tamanhoCelula - 2, tamanhoCelula - 2);
 
-                // Números brancos dentro dos quadrados
                 ctx.font = `bold 28px 'Segoe UI', Arial`;
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.fillStyle = "#ffffff";
-                ctx.shadowBlur = 4;
-                ctx.shadowColor = "rgba(0,0,0,0.5)";
-                ctx.fillText(numero++, px + (tamanhoCelula - 2) / 2, py + (tamanhoCelula - 2) / 2);
-                ctx.shadowBlur = 0;
+                ctx.fillText(numero++, px + 39, py + 39);
             }
         }
     }
 }
 
-// Evento de submit do formulário
+// Evento principal
 document.getElementById("pallet-form").onsubmit = function (e) {
     e.preventDefault();
 
@@ -100,7 +112,6 @@ document.getElementById("pallet-form").onsubmit = function (e) {
         return;
     }
 
-    // Mostrar loading
     document.getElementById("loading").style.display = "block";
     document.getElementById("results").style.display = "none";
     document.getElementById("results-container").innerHTML = "";
@@ -109,6 +120,19 @@ document.getElementById("pallet-form").onsubmit = function (e) {
         const resultados = [];
 
         veiculosDB[tipo].forEach(veiculo => {
+
+            // ✅ VALIDAÇÃO AQUI
+            const motivos = verificarSeCabe(veiculo, comp, larg, alt);
+
+            if (motivos.length > 0) {
+                resultados.push({
+                    veiculo: veiculo.nome,
+                    naoCabe: true,
+                    motivo: motivos.join(", ")
+                });
+                return;
+            }
+
             const A_fileirasComprimento = Math.floor(veiculo.c / comp);
             const A_fileirasLargura = Math.floor(veiculo.l / larg);
             const totalA = A_fileirasComprimento * A_fileirasLargura;
@@ -122,38 +146,46 @@ document.getElementById("pallet-form").onsubmit = function (e) {
             const totalPallets = palletsPorVagao * veiculo.vagoes;
             const camadas = Math.floor(veiculo.h / alt);
 
-            // NOVO: identificar orientação
             const ladoCarregado = melhor === "A"
                 ? "Comprimento do pallet no comprimento do veículo"
                 : "Largura do pallet no comprimento do veículo";
 
-            if (totalPallets > 0 && palletsPorVagao > 0) {
-                resultados.push({
-                    veiculo: veiculo.nome,
-                    total: totalPallets,
-                    porVagao: palletsPorVagao,
-                    vagoes: veiculo.vagoes,
-                    fileirasComprimento: melhor === "B" ? B_fileirasComprimento : A_fileirasComprimento,
-                    fileirasLargura: melhor === "B" ? B_fileirasLargura : A_fileirasLargura,
-                    camadas: camadas > 0 ? camadas : 1,
-                    ladoCarregado // <-- novo campo
-                });
-            }
+            resultados.push({
+                veiculo: veiculo.nome,
+                naoCabe: false,
+                total: totalPallets,
+                porVagao: palletsPorVagao,
+                vagoes: veiculo.vagoes,
+                fileirasComprimento: melhor === "B" ? B_fileirasComprimento : A_fileirasComprimento,
+                fileirasLargura: melhor === "B" ? B_fileirasLargura : A_fileirasLargura,
+                camadas: camadas > 0 ? camadas : 1,
+                ladoCarregado
+            });
         });
-
-        resultados.sort((a, b) => b.total - a.total);
 
         const container = document.getElementById("results-container");
 
         resultados.forEach((r, i) => {
-            const canvasId = "canvas_" + Date.now() + "_" + i;
-            const isBest = i === 0;
 
             const card = document.createElement("div");
-            card.className = `result-card ${isBest ? 'best' : ''}`;
+            card.className = "result-card";
 
-            // Texto de vagões
-            const vagoesTexto = r.vagoes === 2 ? `${r.porVagao} cada` : '';
+            // ✅ NÃO CABE
+            if (r.naoCabe) {
+                card.innerHTML = `
+                    <div class="result-header">
+                        <h3>${r.veiculo}</h3>
+                    </div>
+                    <div style="color:#ef4444; text-align:center; padding:20px;">
+                        ❌ Não cabe<br>
+                        Motivo: ${r.motivo}
+                    </div>
+                `;
+                container.appendChild(card);
+                return;
+            }
+
+            const canvasId = "canvas_" + Date.now() + "_" + i;
 
             card.innerHTML = `
                 <div class="result-header">
@@ -163,73 +195,22 @@ document.getElementById("pallet-form").onsubmit = function (e) {
                         <div class="label">pallets totais</div>
                     </div>
                 </div>
-                <div class="result-info">
-                    <div class="info-badge">
-                        <span>📦 Por vagão</span>
-                        <span>${formatNumber(r.porVagao)} pallets</span>
-                    </div>
-                    <div class="info-badge">
-                        <span>🚛 Vagões</span>
-                        <span>${r.vagoes}</span>
-                    </div>
-                    <div class="info-badge">
-                        <span>📚 Camadas</span>
-                        <span>${r.camadas}</span>
-                    </div>
-                    <div class="info-badge-one">
-                        <span>🔄 Orientação</span>
-                        <span>${r.ladoCarregado}</span>
-                    </div>
-                    <div class="info-badge">
-                        <span>📐 Disposição</span>
-                        <span>${r.fileirasComprimento}×${r.fileirasLargura}</span>
-                    </div>
-                </div>
-                ${vagoesTexto ? `<div style="text-align: center; color: #10b981; font-size: 14px; margin-bottom: 10px;">✨ ${vagoesTexto} ✨</div>` : ''}
                 <div class="canvas-container">
                     <canvas id="${canvasId}"></canvas>
                 </div>
-                
             `;
 
             container.appendChild(card);
 
-            const canvas = document.getElementById(canvasId);
-            desenharVisual(canvas, r.fileirasComprimento, r.fileirasLargura, r.vagoes);
+            desenharVisual(
+                document.getElementById(canvasId),
+                r.fileirasComprimento,
+                r.fileirasLargura,
+                r.vagoes
+            );
         });
 
         document.getElementById("loading").style.display = "none";
         document.getElementById("results").style.display = "block";
     }, 300);
 };
-
-// Limpar resultados
-document.getElementById("clear-form").onclick = () => {
-    document.getElementById("results").style.display = "none";
-    document.getElementById("results-container").innerHTML = "";
-};
-
-// Carga mista
-document.getElementById("mixed-load").onclick = () => {
-    alert("Funcionalidade de carga mista em desenvolvimento!\nEm breve você poderá calcular cargas com diferentes tipos de pallets.");
-};
-
-// Auto-update
-function autoUpdate() {
-    document.getElementById("pallet-form").dispatchEvent(new Event("submit"));
-}
-
-// Adicionar listeners para auto-update
-const inputs = ["length", "width", "height"];
-let timeoutId;
-inputs.forEach(id => {
-    document.getElementById(id).addEventListener("input", () => {
-        if (timeoutId) clearTimeout(timeoutId);
-        timeoutId = setTimeout(autoUpdate, 500);
-    });
-});
-
-document.getElementById("vehicle-type").addEventListener("change", autoUpdate);
-
-// Executar cálculo inicial
-setTimeout(autoUpdate, 100);
