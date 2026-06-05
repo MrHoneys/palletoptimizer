@@ -144,8 +144,8 @@ function renderCard(r, comp, larg, veiculo) {
     const camadas = Math.max(1, Math.floor(veiculo.h / r.alt));
     const orientClass  = r.melhor === "A" ? "comp" : "larg";
     const orientLabel  = r.melhor === "A"
-        ? "Carregar pelo Comprimento."
-        : "Carregar pela Largura";
+        ? "Comprimento → comprimento do veículo"
+        : "Largura → comprimento do veículo";
     const rotLabel = r.melhor === "A"
         ? "↺ Girar: usar Largura"
         : "↺ Girar: usar Comprimento";
