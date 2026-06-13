@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>palletoptimizer — Carga Mista</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:       #080c12;
+            --surface:  #0e1520;
+            --card:     #121d2e;
+            --border:   #1e304d;
+            --accent:   #00e5ff;
+            --green:    #00ff9d;
+            --orange:   #ff9500;
+            --red:      #ff3b5c;
+            --text:     #e8f0fe;
+            --muted:    #5a7498;
+            --mono:     'Space Mono', monospace;
+            --sans:     'Syne', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--sans);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,229,255,.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,229,255,.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .wrap { max-width: 1320px; margin: 0 auto; padding: 24px 20px; position: relative; z-index: 1; }
+
+        /* ── HEADER ── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 32px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 28px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .logo-icon {
+            width: 44px; height: 44px;
+            background: var(--accent);
+            border-radius: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3px;
+            padding: 8px;
+        }
+        .logo-icon span {
+            background: var(--bg);
+            border-radius: 2px;
+            display: block;
+        }
+        .logo-text { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+        .logo-text em { color: var(--accent); font-style: normal; }
+        .logo-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+        .header-badge {
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 6px 14px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            border-radius: 100px;
+            letter-spacing: 1px;
+        }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .nav-link {
+            font-family: var(--mono);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 24px;
+            flex: 1;
+            text-align: center;
+            transition: all .2s;
+        }
+        .nav-link:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--card);
+            transform: translateY(-1px);
+        }
+        .nav-link.active {
+            border-color: var(--green);
+            color: var(--green);
+            background: rgba(0,255,157,.06);
+        }
+
+        /* ── CARD ── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 28px;
+        }
+        .card h2 {
+            font-size: 13px;
+            font-family: var(--mono);
+            color: var(--accent);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        /* ── INPUTS ── */
+        select, input[type=number] {
+            width: 100%;
+            padding: 11px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: var(--sans);
+            color: var(--text);
+            transition: border-color .2s;
+        }
+        select:focus, input[type=number]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,229,255,.08);
+        }
+        ::placeholder { color: var(--muted); }
+
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .grid4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        .info-box {
+            margin-top: 20px;
+            font-family: var(--mono);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--green);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        /* ── BUTTONS ── */
+        .btn {
+            padding: 16px 20px;
+            border: none;
+            border-radius: 10px;
+            font-family: var(--sans);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .2s;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            letter-spacing: .5px;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg);
+        }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+        .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+        .btn-red {
+            background: transparent;
+            border: 1px solid var(--red);
+            color: var(--red);
+        }
+        .btn-red:hover { background: rgba(255,59,92,.08); }
+
+        /* ── BAU ── */
+        .bau-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 28px;
+            overflow-x: auto;
+        }
+        .bau-title {
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--green);
+            background: rgba(0,255,157,.08);
+            border: 1px solid var(--green);
+            border-radius: 100px;
+            padding: 8px 18px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        #bau {
+            display: flex;
+            gap: 48px;
+            padding: 8px;
+            overflow-x: auto;
+        }
+
+        /* ── LEGENDA ── */
+        #legenda {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 28px;
+            margin-bottom: 28px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            justify-content: center;
+            font-family: var(--mono);
+            font-size: 12px;
+        }
+
+        /* ── RESUMO / TOTAL ── */
+        #info {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 28px;
+            line-height: 1.7;
+        }
+        #total {
+            background: var(--surface);
+            border: 1px solid var(--green);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 28px;
+            text-align: center;
+            font-family: var(--mono);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        .actions-row { display: flex; gap: 16px; }
+        .actions-row .btn { flex: 1; }
+
+        /* ── FOOTER ── */
+        footer {
+            margin-top: 48px;
+            padding: 28px 32px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        footer p { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        @media (max-width: 800px) {
+            header { flex-direction: column; gap: 14px; text-align: center; }
+            .navbar { flex-direction: column; }
+            .grid2 { grid-template-columns: 1fr; }
+            .grid4 { grid-template-columns: 1fr 1fr; }
+            .actions-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <span></span><span></span><span></span><span></span>
+            </div>
+            <div>
+                <div class="logo-text">pallet<em>optimizer</em></div>
+                <div class="logo-sub">Simulador de Carga Mista</div>
+            </div>
+        </div>
+        <div class="header-badge">CARGA MISTA</div>
+    </header>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="misto.html" class="nav-link active">📦 Carga Mista</a>
+        <a href="../retira_icms/tira_icms.html" class="nav-link">🧾 Retirar ICMS</a>
+        <a href="../index.html" class="nav-link">🏠 Principal</a>
+    </nav>
+
+    <!-- Passo 1 - Seleção do Veículo -->
+    <div class="card">
+        <h2>// 1. Escolha o veículo</h2>
+        <div class="grid2">
+            <select id="categoria">
+                <option value="">-- Categoria --</option>
+            </select>
+            <select id="veiculo">
+                <option value="">-- Veículo --</option>
+            </select>
+        </div>
+        <div id="infoVeiculo" class="info-box"></div>
+    </div>
+
+    <!-- Passo 2 - Adicionar Pallets -->
+    <div id="passo2" style="display:none;">
+
+        <div class="card">
+            <h2>// 2. Adicionar Pallets</h2>
+            <div class="grid4">
+                <input type="number" step="0.01" id="comp" placeholder="Comprimento (m)">
+                <input type="number" step="0.01" id="larg" placeholder="Largura (m)">
+                <input type="number" step="0.01" id="alt" placeholder="Altura (m)">
+                <input type="number" id="qtd" placeholder="Quantidade">
+            </div>
+            <button id="add" class="btn btn-primary" style="margin-top:20px;">➕ Adicionar Pallet</button>
+        </div>
+
+        <!-- Baú do Caminhão -->
+        <div class="bau-card">
+            <span class="bau-title">Baú do Caminhão — Vista de Cima (cabine → traseira)</span>
+            <div id="bau"></div>
+        </div>
+
+        <!-- Legenda -->
+        <div id="legenda"></div>
+
+        <!-- Resumo Escrito -->
+        <div id="info"></div>
+
+        <!-- Total -->
+        <div id="total"></div>
+
+        <div class="actions-row">
+            <button id="finalizar" class="btn btn-red">✅ Finalizar Carga</button>
+            <button onclick="limpar()" class="btn btn-ghost">🔄 Limpar Tudo</button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>© 2025-2026 palletoptimizer — Sistema de Otimização de Carga</p>
+        <p>📧 <a href="mailto:juliobaldoo10@gmail.com">juliobaldoo10@gmail.com</a></p>
+    </footer>
+
+</div>
+<script src="misto.js"></script>
+</body>
+</html>
