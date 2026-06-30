@@ -51,11 +51,18 @@ origemEl.value = "PR";
 destinoEl.value = "SP";
 
 // Formata número no padrão monetário brasileiro: 30.000,00
-function formatarMoeda(valor) {
+// decimais: quantidade de casas decimais exibidas (2 = arredondado, mais que isso = sem arredondamento)
+function formatarMoeda(valor, decimais = 2) {
     return "R$ " + valor.toLocaleString("pt-BR", {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: decimais
     });
+}
+
+// Retorna true se o usuário escolheu "sem arredondamento"
+function semArredondamento() {
+    const checked = document.querySelector('input[name="arredondamento"]:checked');
+    return checked ? checked.value === "nao" : false;
 }
 
 function calcular() {
@@ -77,16 +84,19 @@ function calcular() {
 
     let percentual = aliquotaTotal / 100;
 
+    // Retira o ICMS
     let icmsTirado = valorNfe * percentual;
-
     let valorFinal = valorNfe - icmsTirado;
 
     let aliqTexto = aliquota + "%" + (fecp > 0 ? ` + ${fecp}% FECP = ${aliquotaTotal}%` : "");
 
+    // define a quantidade de casas decimais conforme a opção escolhida
+    let decimais = semArredondamento() ? 6 : 2;
+
     document.getElementById("aliq").innerText = aliqTexto;
     document.getElementById("percentual").innerText = percentual.toFixed(4).replace(".", ",");
-    document.getElementById("icmsTirado").innerText = formatarMoeda(icmsTirado);
-    document.getElementById("valorFinal").innerText = formatarMoeda(valorFinal);
+    document.getElementById("icmsTirado").innerText = formatarMoeda(icmsTirado, decimais);
+    document.getElementById("valorFinal").innerText = formatarMoeda(valorFinal, decimais);
 
     desenharTabela(ufOrigem, ufDestino);
 }
@@ -179,3 +189,12 @@ function valorNfeNumerico() {
     if (!v) return NaN;
     return parseFloat(v.replace(/\./g, "").replace(",", "."));
 }
+
+// recalcula automaticamente ao trocar a opção de arredondamento, se já houver um cálculo feito
+document.querySelectorAll('input[name="arredondamento"]').forEach(radio => {
+    radio.addEventListener("change", () => {
+        if (!isNaN(valorNfeNumerico())) {
+            calcular();
+        }
+    });
+});
