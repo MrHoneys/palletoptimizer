@@ -109,19 +109,26 @@ carga.length=0;
 }
 
 /*
-  Decide a melhor orientação do pallet em relação ao veículo:
-  - "casado/lado a lado": tenta encaixar o pallet de forma que múltiplas unidades
-    fiquem lado a lado preenchendo a largura do veículo o máximo possível.
-  - se não der para casar (sobra de largura), o pallet vai centralizado.
+  Decide a orientação do pallet em relação ao veículo:
+
+  - modo = "auto": tenta encaixar o pallet de forma que múltiplas unidades
+    fiquem lado a lado preenchendo a largura do veículo o máximo possível
+    (escolhendo automaticamente a orientação que aproveita mais espaço).
+  - modo = "comprimento": força o comprimento do pallet (cp) a avançar no
+    sentido do comprimento do veículo, e a largura do pallet (lp) a ocupar
+    o sentido da largura do veículo (pallet "normal", não rotacionado).
+  - modo = "largura": força a largura do pallet (lp) a avançar no sentido do
+    comprimento do veículo, e o comprimento do pallet (cp) a ocupar o
+    sentido da largura do veículo (pallet "rotacionado").
 
   cp = comprimento do pallet (m)
   lp = largura do pallet (m)
   comprimentoDisponivel = espaço restante no vagão (m)
   larguraVeiculo = largura interna do veículo (m)
 */
-function calcularMelhorLayout(cp, lp, comprimentoDisponivel, larguraVeiculo){
+function calcularMelhorLayout(cp, lp, comprimentoDisponivel, larguraVeiculo, modo='auto'){
 
-    // Opção 1: pallet "de pé" -> lp ocupa a largura do veículo, cp avança no comprimento
+    // Opção 1: pallet "normal" -> lp ocupa a largura do veículo, cp avança no comprimento
     const op1_porLinha = Math.floor((larguraVeiculo + 1e-6) / lp);
     const op1_linhas   = Math.floor((comprimentoDisponivel + 1e-6) / cp);
     const op1_total    = op1_porLinha * op1_linhas;
@@ -135,7 +142,29 @@ function calcularMelhorLayout(cp, lp, comprimentoDisponivel, larguraVeiculo){
 
     let escolhida;
 
-    if(op2_total > op1_total){
+    if(modo === 'comprimento'){
+        // força opção 1, mesmo que não seja a mais eficiente
+        escolhida = {
+            ladoLargura: lp,
+            avanco: cp,
+            porColuna: op1_porLinha,
+            colunasCabem: op1_linhas,
+            max: op1_total,
+            sobraLargura: op1_sobraLarg,
+            rotacionado: false
+        };
+    } else if(modo === 'largura'){
+        // força opção 2, mesmo que não seja a mais eficiente
+        escolhida = {
+            ladoLargura: cp,
+            avanco: lp,
+            porColuna: op2_porLinha,
+            colunasCabem: op2_linhas,
+            max: op2_total,
+            sobraLargura: op2_sobraLarg,
+            rotacionado: true
+        };
+    } else if(op2_total > op1_total){
         escolhida = {
             ladoLargura: cp,      // dimensão que ocupa a largura do veículo
             avanco: lp,           // dimensão que avança no comprimento
@@ -181,8 +210,19 @@ const lp = +document.getElementById('larg').value;
 const hp = +document.getElementById('alt').value;
 let desejado = +document.getElementById('qtd').value;
 
+const modoEl = document.querySelector('input[name="orientacao"]:checked');
+const modo = modoEl ? modoEl.value : 'auto';
+
 if (!cp || !lp || !hp || !desejado) return alert("⚠️ Preencha todos os campos!");
 if (hp > veiculo.h) return alert("❌ Pallet muito alto! Excede a altura do veículo (" + veiculo.h + "m).");
+
+const modoTexto = modo === 'comprimento'
+    ? 'Comprimento do pallet no sentido do comprimento (manual)'
+    : modo === 'largura'
+        ? 'Largura do pallet no sentido do comprimento — rotacionado (manual)'
+        : 'Automático (melhor aproveitamento)';
+
+let algumEncaixe = false;
 
 for(let v=0; v<vagoes.length; v++){
 
@@ -190,9 +230,11 @@ if(desejado<=0) break;
 
 const vagao = vagoes[v];
 
-const layout = calcularMelhorLayout(cp,lp,vagao.restante,veiculo.l);
+const layout = calcularMelhorLayout(cp,lp,vagao.restante,veiculo.l,modo);
 
 if(layout.max===0) continue;
+
+algumEncaixe = true;
 
 const colocados = Math.min(desejado, layout.max);
 
@@ -219,6 +261,8 @@ avanco: layout.avanco,
 sobraLargura: layout.sobraLargura,
 casado: layout.casado,
 rotacionado: layout.rotacionado,
+modo,
+modoTexto,
 camadas,
 vagao:v
 };
@@ -232,7 +276,12 @@ desejado -= colocados;
 
 }
 
-if(desejado > 0){
+if(!algumEncaixe){
+    const motivo = modo === 'auto'
+        ? ''
+        : ' na orientação escolhida. Tente a opção "Automático" ou a outra orientação.';
+    alert(`❌ Este pallet não cabe no espaço restante${motivo}`);
+} else if(desejado > 0){
     alert(`⚠️ Não há espaço suficiente para ${desejado} pallet(s). Eles não foram adicionados.`);
 }
 
@@ -241,6 +290,37 @@ if(desejado > 0){
 desenhar();
 
 };
+
+/*
+  Exclui um único tipo de pallet (todos os que foram adicionados naquele
+  lançamento) da carga, recalcula o espaço livre do vagão correspondente
+  e redesenha tudo.
+*/
+function excluirPallet(tipo){
+
+    const idx = carga.findIndex(p => p.tipo === tipo);
+    if(idx === -1) return;
+
+    const p = carga[idx];
+
+    if(!confirm(`Remover o pallet #${String(p.tipo).padStart(2,'0')} (${p.cp}×${p.lp}×${p.hp}m) da carga?`)) return;
+
+    // remove da lista global
+    carga.splice(idx, 1);
+
+    // remove do vagão correspondente
+    const vagao = vagoes[p.vagao];
+    if(vagao){
+        const idxV = vagao.carga.findIndex(x => x.tipo === tipo);
+        if(idxV !== -1) vagao.carga.splice(idxV, 1);
+
+        // recalcula o espaço restante do vagão com base no que sobrou
+        const usadoVagao = vagao.carga.reduce((a,c) => a + (c.colunasUsadas * c.avanco), 0);
+        vagao.restante = veiculo.c - usadoVagao;
+    }
+
+    desenhar();
+}
 
 function desenhar() {
 
@@ -392,12 +472,16 @@ vagoes.forEach((vagao, index) => {
       bloco.style.paddingBottom = '16px';
       bloco.style.borderBottom = '1px solid var(--border)';
       bloco.innerHTML = `
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <div style="width:14px;height:14px;border-radius:3px;background:${p.cor};"></div>
-          <strong style="color:var(--text);">#${String(p.tipo).padStart(2,'0')} — Pallet ${p.cp}m × ${p.lp}m × ${p.hp}m</strong>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:14px;height:14px;border-radius:3px;background:${p.cor};"></div>
+            <strong style="color:var(--text);">#${String(p.tipo).padStart(2,'0')} — Pallet ${p.cp}m × ${p.lp}m × ${p.hp}m</strong>
+          </div>
+          <button class="btn-del-small" onclick="excluirPallet(${p.tipo})">🗑️ Excluir</button>
         </div>
         <div style="font-size:13px;color:var(--muted);line-height:1.8;">
           Vagão: <strong style="color:var(--text);">${p.vagao + 1}</strong><br>
+          Orientação escolhida: <strong style="color:var(--accent);">${p.modoTexto}</strong><br>
           ${orientacaoTexto}<br>
           ${disposicaoTexto}<br>
           ${camadaTexto}<br>
