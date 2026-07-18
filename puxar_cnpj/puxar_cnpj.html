@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080c12">
+    <link rel="icon" href="img/logistica.png">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>palletoptimizer — Consulta CNPJ</title>
+    <style>
+        :root {
+            --bg: #080c12;
+            --surface: #0e1520;
+            --card: #121d2e;
+            --card-2: #16243a;
+            --border: #1e304d;
+            --accent: #00e5ff;
+            --green: #00ff9d;
+            --orange: #ff9500;
+            --red: #ff3b5c;
+            --text: #e8f0fe;
+            --muted: #7890b2;
+            --shadow: 0 24px 80px rgba(0, 0, 0, .28);
+            --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            overflow-x: hidden
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background-image: linear-gradient(rgba(0, 229, 255, .03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, .03) 1px, transparent 1px);
+            background-size: 40px 40px
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            z-index: -1;
+            width: 520px;
+            height: 520px;
+            right: -180px;
+            top: -220px;
+            background: radial-gradient(circle, rgba(0, 229, 255, .10), transparent 68%);
+            pointer-events: none
+        }
+
+        button,
+        input {
+            font: inherit
+        }
+
+        button {
+            border: 0
+        }
+
+        .wrap {
+            width: min(1320px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 24px 0 48px
+        }
+
+        .panel {
+            background: rgba(14, 21, 32, .94);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow)
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 22px 28px;
+            margin-bottom: 24px
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .logo-icon {
+            width: 46px;
+            height: 46px;
+            padding: 8px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3px;
+            background: var(--accent);
+            border-radius: 11px;
+            box-shadow: 0 0 28px rgba(0, 229, 255, .16)
+        }
+
+        .logo-icon span {
+            display: block;
+            background: var(--bg);
+            border-radius: 2px
+        }
+
+        .logo-text {
+            font-size: clamp(18px, 3vw, 23px);
+            font-weight: 850;
+            letter-spacing: -.7px
+        }
+
+        .logo-text em {
+            color: var(--accent);
+            font-style: normal
+        }
+
+        .logo-sub {
+            margin-top: 3px;
+            color: var(--muted);
+            font: 11px var(--mono);
+            letter-spacing: .08em
+        }
+
+        .badge {
+            padding: 7px 13px;
+            border: 1px solid var(--accent);
+            border-radius: 999px;
+            color: var(--accent);
+            font: 700 10px var(--mono);
+            letter-spacing: .14em;
+            white-space: nowrap
+        }
+
+        .hero {
+            padding: clamp(22px, 4vw, 38px);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden
+        }
+
+        .hero::after {
+            content: "CNPJ";
+            position: absolute;
+            right: 24px;
+            bottom: -26px;
+            color: rgba(0, 229, 255, .035);
+            font-weight: 900;
+            font-size: clamp(90px, 18vw, 190px);
+            line-height: 1;
+            pointer-events: none
+        }
+
+        .eyebrow {
+            color: var(--accent);
+            font: 700 11px var(--mono);
+            letter-spacing: .18em;
+            text-transform: uppercase;
+            margin-bottom: 12px
+        }
+
+        .hero h1 {
+            max-width: 780px;
+            font-size: clamp(30px, 5vw, 56px);
+            line-height: 1.03;
+            letter-spacing: -2px
+        }
+
+        .hero p {
+            max-width: 750px;
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.7
+        }
+
+        .search-box {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            margin-top: 26px;
+            position: relative;
+            z-index: 1
+        }
+
+        .input-wrap {
+            position: relative
+        }
+
+        .input-wrap svg {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--muted);
+            pointer-events: none
+        }
+
+        .input-wrap input {
+            width: 100%;
+            height: 54px;
+            padding: 0 18px 0 48px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font: 700 17px var(--mono);
+            letter-spacing: .06em;
+            outline: none;
+            transition: .2s
+        }
+
+        .input-wrap input::placeholder {
+            color: #526987
+        }
+
+        .input-wrap input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(0, 229, 255, .08)
+        }
+
+        .btn {
+            min-height: 50px;
+            padding: 0 18px;
+            border-radius: 11px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            cursor: pointer;
+            font-weight: 800;
+            transition: .2s
+        }
+
+        .btn svg {
+            width: 18px;
+            height: 18px
+        }
+
+        .btn:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+            transform: none !important
+        }
+
+        .btn-primary {
+            min-width: 168px;
+            background: var(--accent);
+            color: var(--bg)
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px)
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border)
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent)
+        }
+
+        .helper {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 10px;
+            color: var(--muted);
+            font: 11px var(--mono)
+        }
+
+        .status-line {
+            min-height: 22px;
+            margin-top: 14px;
+            font: 12px var(--mono)
+        }
+
+        .status-line.error {
+            color: var(--red)
+        }
+
+        .status-line.success {
+            color: var(--green)
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            color: var(--accent)
+        }
+
+        .loading.show {
+            display: flex
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(0, 229, 255, .25);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .7s linear infinite
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        .results {
+            display: none
+        }
+
+        .results.show {
+            display: block
+        }
+
+        .summary-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin: 6px 0 16px
+        }
+
+        .summary-head h2,
+        .section-head h2 {
+            font-size: 13px;
+            color: var(--accent);
+            font-family: var(--mono);
+            letter-spacing: .16em;
+            text-transform: uppercase
+        }
+
+        .result-meta {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px
+        }
+
+        .pill {
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface);
+            color: var(--muted);
+            font: 700 10px var(--mono)
+        }
+
+        .pill strong {
+            color: var(--text)
+        }
+
+        .identity {
+            padding: 26px;
+            margin-bottom: 20px
+        }
+
+        .identity-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px
+        }
+
+        .company-name {
+            font-size: clamp(22px, 4vw, 34px);
+            line-height: 1.15;
+            letter-spacing: -1px
+        }
+
+        .trade-name {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 15px
+        }
+
+        .situation {
+            flex: none;
+            padding: 8px 13px;
+            border-radius: 999px;
+            font: 800 11px var(--mono);
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            border: 1px solid
+        }
+
+        .situation.active {
+            color: var(--green);
+            border-color: rgba(0, 255, 157, .5);
+            background: rgba(0, 255, 157, .08)
+        }
+
+        .situation.inactive {
+            color: var(--red);
+            border-color: rgba(255, 59, 92, .5);
+            background: rgba(255, 59, 92, .08)
+        }
+
+        .situation.neutral {
+            color: var(--orange);
+            border-color: rgba(255, 149, 0, .5);
+            background: rgba(255, 149, 0, .08)
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 24px
+        }
+
+        .info-card {
+            min-height: 112px;
+            padding: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 13px
+        }
+
+        .info-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            color: var(--muted);
+            font: 700 10px var(--mono);
+            letter-spacing: .09em;
+            text-transform: uppercase
+        }
+
+        .info-label svg {
+            width: 15px;
+            height: 15px;
+            color: var(--accent)
+        }
+
+        .info-value {
+            font-size: 14px;
+            line-height: 1.55;
+            overflow-wrap: anywhere
+        }
+
+        .info-value.mono {
+            font-family: var(--mono);
+            font-size: 12px
+        }
+
+        .section {
+            padding: 24px;
+            margin-bottom: 20px
+        }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 17px
+        }
+
+        .section-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px
+        }
+
+        .section-actions .btn {
+            min-height: 38px;
+            padding: 0 13px;
+            font-size: 12px
+        }
+
+        .tree {
+            display: grid;
+            gap: 12px
+        }
+
+        .tree-node {
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            background: var(--surface);
+            overflow: hidden
+        }
+
+        .tree-node>summary {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+            font-weight: 800
+        }
+
+        .tree-node>summary::-webkit-details-marker {
+            display: none
+        }
+
+        .tree-node>summary::after {
+            content: "+";
+            color: var(--accent);
+            font: 20px var(--mono)
+        }
+
+        .tree-node[open]>summary::after {
+            content: "−"
+        }
+
+        .node-title {
+            overflow-wrap: anywhere
+        }
+
+        .node-kind {
+            color: var(--muted);
+            font: 10px var(--mono);
+            text-transform: uppercase;
+            white-space: nowrap
+        }
+
+        .node-content {
+            padding: 0 14px 14px
+        }
+
+        .primitive-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px
+        }
+
+        .primitive-row {
+            display: grid;
+            grid-template-columns: minmax(150px, .8fr) minmax(0, 1.7fr);
+            gap: 12px;
+            padding: 11px 12px;
+            border: 1px solid rgba(30, 48, 77, .8);
+            border-radius: 9px;
+            background: var(--bg)
+        }
+
+        .primitive-key {
+            color: var(--muted);
+            font: 11px var(--mono);
+            overflow-wrap: anywhere
+        }
+
+        .primitive-value {
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap
+        }
+
+        .empty {
+            color: var(--muted);
+            font-style: italic
+        }
+
+        .array-items {
+            display: grid;
+            gap: 9px
+        }
+
+        .array-item {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg)
+        }
+
+        .array-index {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--accent);
+            font: 700 10px var(--mono)
+        }
+
+        .raw-json {
+            display: none;
+            margin-top: 14px;
+            max-height: 560px;
+            overflow: auto;
+            padding: 18px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #05080d;
+            color: #bfeef4;
+            font: 12px/1.65 var(--mono);
+            white-space: pre-wrap;
+            overflow-wrap: anywhere
+        }
+
+        .raw-json.show {
+            display: block
+        }
+
+        footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            padding: 20px 24px;
+            color: var(--muted);
+            font: 11px var(--mono)
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none
+        }
+
+        .toast {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 50;
+            max-width: min(360px, calc(100% - 40px));
+            padding: 13px 16px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: var(--card-2);
+            box-shadow: var(--shadow);
+            font: 12px var(--mono);
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: .25s
+        }
+
+        .toast.show {
+            transform: none;
+            opacity: 1
+        }
+
+        .toast.success {
+            border-color: rgba(0, 255, 157, .5);
+            color: var(--green)
+        }
+
+        .toast.error {
+            border-color: rgba(255, 59, 92, .5);
+            color: var(--red)
+        }
+
+        @media(max-width:1000px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr))
+            }
+
+            .primitive-list {
+                grid-template-columns: 1fr
+            }
+        }
+
+        @media(max-width:680px) {
+            .wrap {
+                width: min(100% - 20px, 1320px);
+                padding-top: 10px
+            }
+
+            header {
+                padding: 17px
+            }
+
+            .badge {
+                display: none
+            }
+
+            .hero {
+                padding: 22px
+            }
+
+            .hero h1 {
+                letter-spacing: -1px
+            }
+
+            .search-box {
+                grid-template-columns: 1fr
+            }
+
+            .btn-primary {
+                width: 100%
+            }
+
+            .helper {
+                flex-direction: column;
+                gap: 5px
+            }
+
+            .summary-head,
+            .identity-top,
+            .section-head {
+                flex-direction: column
+            }
+
+            .result-meta {
+                justify-content: flex-start
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr
+            }
+
+            .section-actions {
+                width: 100%
+            }
+
+            .section-actions .btn {
+                flex: 1
+            }
+
+            .primitive-row {
+                grid-template-columns: 1fr;
+                gap: 5px
+            }
+        }
+
+        /* ── NAVBAR ── */
+        .navbar {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .nav-link {
+            font-family: var(--mono);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 24px;
+            flex: 1;
+            text-align: center;
+            transition: all .2s;
+        }
+
+        .nav-link:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--card);
+            transform: translateY(-1px);
+        }
+
+        .nav-link.active {
+            border-color: var(--green);
+            color: var(--green);
+            background: rgba(0,255,157,.06);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+
+
+        <header class="panel">
+            <div class="logo">
+                <div class="logo-icon" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                <div>
+                    <div class="logo-text">pallet<em>optimizer</em></div>
+                    <div class="logo-sub">Consulta pública de dados empresariais</div>
+                </div>
+            </div>
+            <div class="badge">CONSULTA CNPJ</div>
+        </header>
+
+
+        <!-- NAVBAR -->
+        <nav class="navbar">
+            <a href="../index.html" class="nav-link"> 🏠 Principal</a>
+            <a href="../carga_mista/misto.html" class="nav-link">📦 Carga Mista</a>
+            <a href="../retira_icms/tira_icms.html" class="nav-link">🧾 Retirar ICMS</a>
+            <a href="puxar_cnpj.html" class="nav-link active"> 📋 Consulta CNPJ</a>
+        </nav>
+
+        <main>
+            <section class="hero panel">
+                <div class="eyebrow">// Dados empresariais</div>
+                <h1>Consulte um CNPJ em poucos segundos.</h1>
+                <p>Informe um CNPJ válido para visualizar o resumo cadastral e todos os dados retornados pela API
+                    pública CNPJ.ws.</p>
+                <form id="searchForm" class="search-box" novalidate>
+                    <div class="input-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <path d="m20 20-3.5-3.5"></path>
+                        </svg>
+                        <input id="cnpjInput" type="text" inputmode="numeric" autocomplete="off" maxlength="18"
+                            placeholder="00.000.000/0000-00" aria-label="CNPJ">
+                    </div>
+                    <button id="consultButton" class="btn btn-primary" type="submit">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <path d="m20 20-3.5-3.5"></path>
+                        </svg>
+                        <span>Consultar</span>
+                    </button>
+                </form>
+                <div class="helper"><span>Digite somente os números ou use o formato completo.</span><span>Limite
+                        público: até 3 consultas/minuto.</span></div>
+                <div id="statusLine" class="status-line" role="status" aria-live="polite"></div>
+                <div id="loading" class="loading" aria-live="polite"><span class="spinner"></span><span>Consultando
+                        dados do CNPJ...</span></div>
+            </section>
+
+            <section id="results" class="results" aria-live="polite">
+                <div class="summary-head">
+                    <h2>// Resumo cadastral</h2>
+                    <div class="result-meta"><span class="pill">CNPJ <strong id="metaCnpj">—</strong></span><span
+                            class="pill"><strong id="fieldCount">0</strong> campos preenchidos</span></div>
+                </div>
+
+                <article class="identity panel">
+                    <div class="identity-top">
+                        <div>
+                            <h2 id="companyName" class="company-name">—</h2>
+                            <p id="tradeName" class="trade-name">—</p>
+                        </div>
+                        <span id="situation" class="situation neutral">Não informado</span>
+                    </div>
+                    <div id="summaryGrid" class="summary-grid"></div>
+                </article>
+
+                <section class="section panel">
+                    <div class="section-head">
+                        <h2>// Todos os dados retornados</h2>
+                        <div class="section-actions">
+                            <button id="expandAll" class="btn btn-secondary" type="button">Expandir tudo</button>
+                            <button id="collapseAll" class="btn btn-secondary" type="button">Recolher tudo</button>
+                        </div>
+                    </div>
+                    <div id="dynamicData" class="tree"></div>
+                </section>
+
+                <section class="section panel">
+                    <div class="section-head">
+                        <h2>// JSON bruto</h2>
+                        <div class="section-actions">
+                            <button id="toggleJson" class="btn btn-secondary" type="button">Ver JSON</button>
+                            <button id="copyJson" class="btn btn-secondary" type="button">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    aria-hidden="true">
+                                    <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                Copiar JSON
+                            </button>
+                        </div>
+                    </div>
+                    <pre id="rawJson" class="raw-json"></pre>
+                </section>
+            </section>
+        </main>
+
+        <footer class="panel"><span>© 2025–2026 palletoptimizer</span><span>Dados fornecidos pela API pública <a
+                    href="https://cnpj.ws" target="_blank" rel="noopener noreferrer">CNPJ.ws</a></span></footer>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="puxar_cnpj.js"></script>
+
+</body>
+
+</html>
